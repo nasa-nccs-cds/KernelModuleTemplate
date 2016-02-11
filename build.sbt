@@ -1,4 +1,4 @@
-name := "kernel-module-template"
+name := "kermodbase"
 
 version := "1.0-SNAPSHOT"
 
@@ -11,7 +11,5 @@ lazy val root = (project in file("."))
 libraryDependencies ++= Dependencies.scala
 
 libraryDependencies ++= Dependencies.CDAPI
-
-libraryDependencies ++= Dependencies.ndarray
 
 packageOptions in (Compile, packageBin) += Package.ManifestAttributes( java.util.jar.Attributes.Name.SPECIFICATION_TITLE -> "CDS2KernelModule" )

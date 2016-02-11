@@ -1,7 +1,6 @@
 package ext.cds2.modules
 
 import nasa.nccs.cdapi.kernels.{ KernelModule, Kernel, ExecutionResult, Port, DataFragment }
-import org.nd4j.linalg.factory.Nd4j
 
 /**
   * Created by tpmaxwel on 2/9/16.
@@ -19,8 +18,8 @@ class ModuleTemplate extends KernelModule {
 
     def execute(inputSubsets: List[DataFragment], run_args: Map[String, Any]): ExecutionResult = {
       val inputSubset = inputSubsets.head
-      val result = Array[Float](Nd4j.mean(inputSubset.data).getFloat(0))
-      logger.info("Kernel %s: Executed operation %s, result = %s ".format(name, operation, result.mkString("[", ",", "]")))
+      val result = "0.0"  // Add computation here
+      logger.info("Kernel %s: Executed operation %s, result = %s ".format( name, operation, result ))
       new ExecutionResult(Array.emptyFloatArray)
     }
   }
