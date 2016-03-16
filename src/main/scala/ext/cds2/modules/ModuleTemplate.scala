@@ -26,7 +26,7 @@ class ModuleTemplate extends KernelModule {
       val inputSubset = inputSubsets.head
       val result = "0.0"  // Add computation here
       logger.info("Kernel %s: Executed operation %s, result = %s ".format( name, operation, result ))
-      new ExecutionResult(Array.emptyFloatArray)
+      new BlockingExecutionResult(Array.emptyFloatArray)
     }
   }
 }
