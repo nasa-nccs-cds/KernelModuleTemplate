@@ -20,8 +20,8 @@ class ModuleTemplate extends KernelModule {
     override val description = "Average over Input Fragment"
 
     def execute(context: ExecutionContext ): ExecutionResult = {
-      val inputVar: KernelDataInput  =  context.fragments.head
-      val optargs: Map[String,String] =  context.args
+      val inputVar: KernelDataInput  =  context.inputs.head
+      val optargs: Map[String,String] =  context.getConfiguration("operation")
       val input_array = inputVar.dataFragment
       val axisSpecs = inputVar.axisIndices
       val axes = axisSpecs.getAxes
