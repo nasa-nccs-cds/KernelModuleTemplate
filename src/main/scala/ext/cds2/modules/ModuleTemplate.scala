@@ -3,11 +3,9 @@ package ext.cds2.modules
 import nasa.nccs.cdapi.cdm.{BinnedArrayFactory, KernelDataInput, PartitionedFragment, aveSliceAccumulator}
 import nasa.nccs.cdapi.kernels._
 import nasa.nccs.cdapi.tensors.Nd4jMaskedTensor
+import nasa.nccs.esgf.process.{OperationContext, RequestContext, ServerContext}
 import org.nd4j.linalg.factory.Nd4j
 
-/**
-  * Created by tpmaxwel on 2/9/16.
-  */
 class ModuleTemplate extends KernelModule {
   override val version = "1.0-SNAPSHOT"
   override val organization = "nasa.nccs"
@@ -19,17 +17,15 @@ class ModuleTemplate extends KernelModule {
     val outputs = List(Port("result", "1"))
     override val description = "Average over Input Fragment"
 
-    def execute(context: ExecutionContext ): ExecutionResult = {
-      val inputVar: KernelDataInput  =  context.inputs.head
-      val optargs: Map[String,String] =  context.getConfiguration("operation")
+    def execute( operationCx: OperationContext, requestCx: RequestContext, serverCx: ServerContext ): ExecutionResult = {
+      val inputVar: KernelDataInput  =  inputVars( operationCx, requestCx, serverCx ).head
       val input_array = inputVar.dataFragment
-      val axisSpecs = inputVar.axisIndices
-      val axes = axisSpecs.getAxes
-      val variable = context.dataManager.getVariable( inputVar.getSpec )
+      val axes = inputVar.axisIndices.getAxes
+      val variable = serverCx.getVariable( inputVar.getSpec )
       val section = inputVar.getSpec.getSubSection(input_array.fragmentSpec.roi)
       val result = "0.0"  // Add computation here
       logger.info("Kernel %s: Executed operation %s, result = %s ".format( name, operation, result ))
-      new BlockingExecutionResult(context.id, List(inputVar.getSpec), variable.getGridSpec(section),  new Nd4jMaskedTensor(Nd4j.zeros(0),Float.MaxValue) )
+      new BlockingExecutionResult( operationCx.identifier, List(inputVar.getSpec), variable.getGridSpec(section),  new Nd4jMaskedTensor(Nd4j.zeros(0),Float.MaxValue) )
     }
   }
 }
