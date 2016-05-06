@@ -1,10 +1,10 @@
 package ext.cds2.modules
 
-import nasa.nccs.cdapi.cdm.{BinnedArrayFactory, KernelDataInput, PartitionedFragment, aveSliceAccumulator}
+import nasa.nccs.cdapi.cdm._
 import nasa.nccs.cdapi.kernels._
-import nasa.nccs.cdapi.tensors.Nd4jMaskedTensor
-import nasa.nccs.esgf.process.{OperationContext, RequestContext, ServerContext}
-import org.nd4j.linalg.factory.Nd4j
+import nasa.nccs.cdapi.tensors.CDFloatArray
+import nasa.nccs.esgf.process._
+
 
 class ModuleTemplate extends KernelModule {
   override val version = "1.0-SNAPSHOT"
@@ -12,20 +12,27 @@ class ModuleTemplate extends KernelModule {
   override val author = "Thomas Maxwell"
   override val contact = "thomas.maxwell@nasa.gov"
 
-  class average extends Kernel {
+  class max extends Kernel {
     val inputs = List(Port("input fragment", "1"))
     val outputs = List(Port("result", "1"))
-    override val description = "Average over Input Fragment"
+    override val description = "Maximum over Axes on Input Fragment"
 
-    def execute( operationCx: OperationContext, requestCx: RequestContext, serverCx: ServerContext ): ExecutionResult = {
-      val inputVar: KernelDataInput  =  inputVars( operationCx, requestCx, serverCx ).head
-      val input_array = inputVar.dataFragment
-      val axes = inputVar.axisIndices.getAxes
-      val variable = serverCx.getVariable( inputVar.getSpec )
-      val section = inputVar.getSpec.getSubSection(input_array.fragmentSpec.roi)
-      val result = "0.0"  // Add computation here
-      logger.info("Kernel %s: Executed operation %s, result = %s ".format( name, operation, result ))
-      new BlockingExecutionResult( operationCx.identifier, List(inputVar.getSpec), variable.getGridSpec(section),  new Nd4jMaskedTensor(Nd4j.zeros(0),Float.MaxValue) )
+    def execute(operationCx: OperationContext, requestCx: RequestContext, serverCx: ServerContext): ExecutionResult = {
+      val inputVar: KernelDataInput = inputVars(operationCx, requestCx, serverCx).head
+      val input_array: CDFloatArray = inputVar.dataFragment.data
+      val axisSpecs = inputVar.axisIndices
+      val async = requestCx.config("async", "false").toBoolean
+      val axes = axisSpecs.getAxes
+      val t10 = System.nanoTime
+      val max_val_masked: CDFloatArray = input_array.max(axes.toArray)
+      val t11 = System.nanoTime
+      logger.info("Max_val_masked, time = %.4f s, result = %s".format((t11 - t10) / 1.0E9, max_val_masked.toString))
+      val variable = serverCx.getVariable(inputVar.getSpec)
+      val section = inputVar.getSpec.getReducedSection(Set(axes: _*))
+      if (async) {
+        new AsyncExecutionResult(saveResult(max_val_masked, requestCx, serverCx, variable.getGridSpec(section), inputVar.getVariableMetadata(serverCx), inputVar.getDatasetMetadata(serverCx)))
+      }
+      else new BlockingExecutionResult(operationCx.identifier, List(inputVar.getSpec), variable.getGridSpec(section), max_val_masked)
     }
   }
 }
